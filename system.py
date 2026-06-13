@@ -76,9 +76,62 @@ def abrir_vscode():
 def abrir_cmd():
     subprocess.Popen("cmd")
 
-def abrir_powershell():
-    subprocess.Popen("powershell")
-
+def limpar_temp():
+    """Limpa as pastas TEMP, TMP e cache de instaladores do Windows"""
+    import shutil
+    
+    usuario = os.environ.get("USERNAME", "")
+    pastas = [
+        os.environ.get("TEMP", ""),
+        os.environ.get("TMP", ""),
+        f"C:\\Users\\{usuario}\\AppData\\Local\\Temp",
+        "C:\\Windows\\Temp",
+        f"C:\\Users\\{usuario}\\AppData\\Local\\Microsoft\\Windows\\INetCache",
+        f"C:\\Windows\\Prefetch",
+        f"C:\\Users\\{usuario}\\AppData\\Local\\Microsoft\\Windows\\WER",
+    ]
+    
+    total_apagado = 0
+    
+    for pasta in pastas:
+        if not os.path.exists(pasta):
+            continue
+        for root_dir, dirs, files in os.walk(pasta, topdown=True, followlinks=False):
+            for arquivo in files:
+                try:
+                    caminho = os.path.join(root_dir, arquivo)
+                    os.remove(caminho)
+                    total_apagado += 1
+                except (PermissionError, OSError):
+                    pass
+            for diretorio in dirs:
+                try:
+                    caminho = os.path.join(root_dir, diretorio)
+                    shutil.rmtree(caminho, ignore_errors=True)
+                except (PermissionError, OSError):
+                    pass
+    
+    # Cache do Windows Installer (*.msi)
+    cache_installer = f"C:\\Windows\\Installer\\$PatchCache$"
+    if os.path.exists(cache_installer):
+        try:
+            shutil.rmtree(cache_installer, ignore_errors=True)
+        except:
+            pass
+    
+    messagebox.showinfo(
+        "Limpeza Concluída",
+        f"Limpeza finalizada!\n\n"
+        f"Arquivos removidos: ~{total_apagado}\n\n"
+        f"Pastas verificadas:\n"
+        f"• TEMP do usuário\n"
+        f"• TMP do usuário\n"
+        f"• Temp do Windows\n"
+        f"• Prefetch\n"
+        f"• Cache do Navegador\n"
+        f"• Cache de Instaladores\n\n"
+        f"Nota: Alguns arquivos em uso não puderam ser removidos."
+    )
 def abrir_navegador():
     try:
         chrome_paths = [
@@ -112,7 +165,7 @@ def sair():
 # Layout compacto: 4 linhas x 2 colunas
 criar_btn(botoes_frame, "💻 VS Code", abrir_vscode, COR_BOTAO, 0, 0)
 criar_btn(botoes_frame, "⬛ CMD", abrir_cmd, "#16A085", 0, 1)
-criar_btn(botoes_frame, "⚡ PowerShell", abrir_powershell, "#8E44AD", 1, 0)
+criar_btn(botoes_frame, "🧹 Limpeza Temp", limpar_temp, "#8E44AD", 1, 0)
 criar_btn(botoes_frame, "🌐 Navegador", abrir_navegador, "#E67E22", 1, 1)
 criar_btn(botoes_frame, "🧮 Calculadora", abrir_calculadora, "#D35400", 2, 0)
 criar_btn(botoes_frame, "📁 Explorador", abrir_explorador, "#27AE60", 2, 1)
