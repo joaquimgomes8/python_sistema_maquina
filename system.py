@@ -18,7 +18,7 @@ root.title("Sistema Pessoal")
 root.configure(bg=COR_FUNDO)
 root.resizable(False, False)
 
-# Aumentar a janela (300x400) para caber os cronômetros
+# Tornar a janela menor (300x400)
 largura_tela = root.winfo_screenwidth()
 altura_tela = root.winfo_screenheight()
 x = (largura_tela - 300) // 2
@@ -71,163 +71,236 @@ def criar_btn(frame, texto, comando, cor=COR_BOTAO, linha=0, coluna=0):
 
 
 # ===== CRONÔMETROS =====
-def abrir_cronometros():
-    """Abre a janela de cronômetros (progressivo e regressivo)"""
-    cron_win = tk.Toplevel(root)
-    cron_win.title("Cronômetros")
-    cron_win.geometry("320x260")
-    cron_win.configure(bg=COR_FUNDO)
-    cron_win.resizable(False, False)
+contador_janelas = [0]  # Para dar títulos únicos
+
+def criar_janela_progressivo():
+    """Abre uma nova janela independente de cronômetro progressivo"""
+    contador_janelas[0] += 1
+    n = contador_janelas[0]
+
+    win = tk.Toplevel(root)
+    win.title(f"Progressivo #{n}")
+    win.geometry("300x210")
+    win.configure(bg=COR_FUNDO)
+    win.resizable(False, False)
 
     # Centralizar
-    largura_tela = cron_win.winfo_screenwidth()
-    altura_tela = cron_win.winfo_screenheight()
-    x = (largura_tela - 320) // 2
-    y = (altura_tela - 260) // 2
-    cron_win.geometry(f"320x260+{x}+{y}")
+    lx = win.winfo_screenwidth()
+    ly = win.winfo_screenheight()
+    x = (lx - 300) // 2 + n * 30
+    y = (ly - 210) // 2 + n * 30
+    win.geometry(f"300x210+{x}+{y}")
 
-    frame_atual = None
+    frame = tk.Frame(win, bg=COR_FUNDO, padx=15, pady=10)
+    frame.pack(expand=True, fill="both")
 
-    def limpar_frame():
-        nonlocal frame_atual
-        if frame_atual:
-            frame_atual.destroy()
+    # Nome
+    lbl_nome = tk.Label(frame, text="Progressivo", font=("Arial", 10, "bold"),
+                        bg=COR_FUNDO, fg="#555")
+    lbl_nome.pack()
 
-    # ------ PROGRESSIVO ------
-    def abrir_progressivo():
-        limpar_frame()
-        nonlocal frame_atual
-        frame_atual = tk.Frame(cron_win, bg=COR_FUNDO)
-        frame_atual.pack(expand=True, fill="both", padx=15, pady=10)
+    def renomear():
+        resp = simpledialog.askstring("Nome", "Digite o nome:", parent=win)
+        if resp:
+            lbl_nome.config(text=resp)
 
-        lbl_tempo = tk.Label(frame_atual, text="00:00:00", font=("Arial", 36, "bold"),
-                             bg=COR_FUNDO, fg=COR_TITULO)
-        lbl_tempo.pack(pady=(20, 15))
+    lbl_tempo = tk.Label(frame, text="00:00:00", font=("Arial", 36, "bold"),
+                         bg=COR_FUNDO, fg=COR_TITULO)
+    lbl_tempo.pack(pady=(5, 8))
 
-        executando = [False]
-        segundos = [0]
+    executando = [False]
+    segundos = [0]
 
-        def atualizar():
-            while executando[0]:
-                segundos[0] += 1
-                h = segundos[0] // 3600
-                m = (segundos[0] % 3600) // 60
-                s = segundos[0] % 60
-                lbl_tempo.config(text=f"{h:02d}:{m:02d}:{s:02d}")
-                time.sleep(1)
+    def atualizar():
+        while executando[0]:
+            segundos[0] += 1
+            h = segundos[0] // 3600
+            m = (segundos[0] % 3600) // 60
+            s = segundos[0] % 60
+            lbl_tempo.config(text=f"{h:02d}:{m:02d}:{s:02d}")
+            time.sleep(1)
 
-        def iniciar():
-            if not executando[0]:
-                executando[0] = True
-                threading.Thread(target=atualizar, daemon=True).start()
+    def iniciar():
+        if not executando[0]:
+            executando[0] = True
+            threading.Thread(target=atualizar, daemon=True).start()
 
-        def parar():
+    def parar():
+        executando[0] = False
+
+    def resetar():
+        executando[0] = False
+        segundos[0] = 0
+        lbl_tempo.config(text="00:00:00")
+
+    btn_frame = tk.Frame(frame, bg=COR_FUNDO)
+    btn_frame.pack()
+
+    tk.Button(btn_frame, text="▶ Iniciar", command=iniciar, font=("Arial", 9, "bold"),
+              bg="#27AE60", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
+              activebackground="#1ABC9C", activeforeground="white").grid(row=0, column=0, padx=3)
+    tk.Button(btn_frame, text="⏸ Parar", command=parar, font=("Arial", 9, "bold"),
+              bg="#E67E22", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
+              activebackground="#D35400", activeforeground="white").grid(row=0, column=1, padx=3)
+    tk.Button(btn_frame, text="↺ Reset", command=resetar, font=("Arial", 9, "bold"),
+              bg="#E74C3C", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
+              activebackground="#C0392B", activeforeground="white").grid(row=0, column=2, padx=3)
+
+    tk.Button(frame, text="✏️ Renomear", command=renomear, font=("Arial", 8),
+              bg="#7F8C8D", fg="white", relief="flat", bd=0, padx=8, pady=3, cursor="hand2",
+              activebackground="#95A5A6", activeforeground="white").pack(pady=(6, 0))
+
+
+def criar_janela_regressivo():
+    """Abre uma nova janela independente de cronômetro regressivo"""
+    contador_janelas[0] += 1
+    n = contador_janelas[0]
+
+    win = tk.Toplevel(root)
+    win.title(f"Regressivo #{n}")
+    win.geometry("320x280")
+    win.configure(bg=COR_FUNDO)
+    win.resizable(False, False)
+
+    # Centralizar
+    lx = win.winfo_screenwidth()
+    ly = win.winfo_screenheight()
+    x = (lx - 320) // 2 + n * 30
+    y = (ly - 280) // 2 + n * 30
+    win.geometry(f"320x280+{x}+{y}")
+
+    frame = tk.Frame(win, bg=COR_FUNDO, padx=15, pady=10)
+    frame.pack(expand=True, fill="both")
+
+    # Nome
+    lbl_nome = tk.Label(frame, text="Regressivo", font=("Arial", 10, "bold"),
+                        bg=COR_FUNDO, fg="#555")
+    lbl_nome.pack()
+
+    lbl_tempo = tk.Label(frame, text="00:00:00", font=("Arial", 36, "bold"),
+                         bg=COR_FUNDO, fg=COR_TITULO)
+    lbl_tempo.pack(pady=(3, 3))
+
+    executando = [False]
+    segundos_restantes = [0]
+
+    # Spinboxes para HH:MM:SS
+    frame_spin = tk.Frame(frame, bg=COR_FUNDO)
+    frame_spin.pack(pady=(3, 5))
+
+    tk.Label(frame_spin, text="HH", font=("Arial", 8), bg=COR_FUNDO, fg="#555").grid(row=0, column=0, padx=3)
+    tk.Label(frame_spin, text="MM", font=("Arial", 8), bg=COR_FUNDO, fg="#555").grid(row=0, column=1, padx=3)
+    tk.Label(frame_spin, text="SS", font=("Arial", 8), bg=COR_FUNDO, fg="#555").grid(row=0, column=2, padx=3)
+
+    spin_h = tk.Spinbox(frame_spin, from_=0, to=99, width=4, font=("Arial", 11), justify="center")
+    spin_m = tk.Spinbox(frame_spin, from_=0, to=59, width=4, font=("Arial", 11), justify="center")
+    spin_s = tk.Spinbox(frame_spin, from_=0, to=59, width=4, font=("Arial", 11), justify="center")
+
+    spin_h.grid(row=1, column=0, padx=3)
+    spin_m.grid(row=1, column=1, padx=3)
+    spin_s.grid(row=1, column=2, padx=3)
+
+    tk.Label(frame_spin, text=":", font=("Arial", 14, "bold"), bg=COR_FUNDO, fg=COR_TITULO).grid(row=1, column=0, sticky="e", padx=(0, -10))
+    tk.Label(frame_spin, text=":", font=("Arial", 14, "bold"), bg=COR_FUNDO, fg=COR_TITULO).grid(row=1, column=1, sticky="e", padx=(0, -10))
+
+    def aplicar_tempo():
+        try:
+            h = int(spin_h.get())
+            m = int(spin_m.get())
+            s = int(spin_s.get())
+            total = h * 3600 + m * 60 + s
+            if total == 0:
+                messagebox.showwarning("Aviso", "Defina pelo menos 1 segundo!", parent=win)
+                return
+            segundos_restantes[0] = total
+            lbl_tempo.config(text=f"{h:02d}:{m:02d}:{s:02d}", fg=COR_TITULO)
+        except ValueError:
+            messagebox.showwarning("Erro", "Valores inválidos!", parent=win)
+
+    def atualizar():
+        while executando[0] and segundos_restantes[0] > 0:
+            segundos_restantes[0] -= 1
+            h = segundos_restantes[0] // 3600
+            m = (segundos_restantes[0] % 3600) // 60
+            s = segundos_restantes[0] % 60
+            lbl_tempo.config(text=f"{h:02d}:{m:02d}:{s:02d}")
+            time.sleep(1)
+        if executando[0]:
             executando[0] = False
+            lbl_tempo.config(text="⏰ FIM!", fg="#E74C3C")
 
-        def resetar():
-            executando[0] = False
-            segundos[0] = 0
-            lbl_tempo.config(text="00:00:00")
+    def iniciar():
+        if segundos_restantes[0] > 0 and not executando[0]:
+            lbl_tempo.config(fg=COR_TITULO)
+            executando[0] = True
+            threading.Thread(target=atualizar, daemon=True).start()
 
-        btn_frame = tk.Frame(frame_atual, bg=COR_FUNDO)
-        btn_frame.pack()
+    def parar():
+        executando[0] = False
 
-        tk.Button(btn_frame, text="▶ Iniciar", command=iniciar, font=("Arial", 9, "bold"),
-                  bg="#27AE60", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
-                  activebackground="#1ABC9C", activeforeground="white").grid(row=0, column=0, padx=4)
-        tk.Button(btn_frame, text="⏸ Parar", command=parar, font=("Arial", 9, "bold"),
-                  bg="#E67E22", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
-                  activebackground="#D35400", activeforeground="white").grid(row=0, column=1, padx=4)
-        tk.Button(btn_frame, text="↺ Resetar", command=resetar, font=("Arial", 9, "bold"),
-                  bg="#E74C3C", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
-                  activebackground="#C0392B", activeforeground="white").grid(row=0, column=2, padx=4)
+    def resetar():
+        executando[0] = False
+        segundos_restantes[0] = 0
+        spin_h.delete(0, tk.END); spin_h.insert(0, "0")
+        spin_m.delete(0, tk.END); spin_m.insert(0, "0")
+        spin_s.delete(0, tk.END); spin_s.insert(0, "0")
+        lbl_tempo.config(text="00:00:00", fg=COR_TITULO)
 
-    # ------ REGRESSIVO ------
-    def abrir_regressivo():
-        limpar_frame()
-        nonlocal frame_atual
-        frame_atual = tk.Frame(cron_win, bg=COR_FUNDO)
-        frame_atual.pack(expand=True, fill="both", padx=15, pady=10)
+    def renomear():
+        resp = simpledialog.askstring("Nome", "Digite o nome:", parent=win)
+        if resp:
+            lbl_nome.config(text=resp)
 
-        lbl_tempo = tk.Label(frame_atual, text="00:00:00", font=("Arial", 36, "bold"),
-                             bg=COR_FUNDO, fg=COR_TITULO)
-        lbl_tempo.pack(pady=(10, 5))
+    # Botão aplicar tempo
+    tk.Button(frame, text="⏱ Aplicar Tempo", command=aplicar_tempo,
+              font=("Arial", 8, "bold"), bg="#8E44AD", fg="white", relief="flat",
+              bd=0, padx=8, pady=3, cursor="hand2",
+              activebackground="#7D3C98", activeforeground="white").pack(pady=(0, 5))
 
-        executando = [False]
-        segundos_restantes = [0]
+    btn_frame = tk.Frame(frame, bg=COR_FUNDO)
+    btn_frame.pack()
 
-        def perguntar_tempo():
-            resposta = simpledialog.askinteger(
-                "Tempo Regressivo",
-                "Digite o tempo em segundos:",
-                parent=cron_win,
-                minvalue=1,
-                maxvalue=86400
-            )
-            if resposta:
-                segundos_restantes[0] = resposta
-                h = resposta // 3600
-                m = (resposta % 3600) // 60
-                s = resposta % 60
-                lbl_tempo.config(text=f"{h:02d}:{m:02d}:{s:02d}")
+    tk.Button(btn_frame, text="▶ Iniciar", command=iniciar, font=("Arial", 9, "bold"),
+              bg="#27AE60", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
+              activebackground="#1ABC9C", activeforeground="white").grid(row=0, column=0, padx=3)
+    tk.Button(btn_frame, text="⏸ Parar", command=parar, font=("Arial", 9, "bold"),
+              bg="#E67E22", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
+              activebackground="#D35400", activeforeground="white").grid(row=0, column=1, padx=3)
+    tk.Button(btn_frame, text="↺ Reset", command=resetar, font=("Arial", 9, "bold"),
+              bg="#E74C3C", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
+              activebackground="#C0392B", activeforeground="white").grid(row=0, column=2, padx=3)
 
-        def atualizar():
-            while executando[0] and segundos_restantes[0] > 0:
-                segundos_restantes[0] -= 1
-                h = segundos_restantes[0] // 3600
-                m = (segundos_restantes[0] % 3600) // 60
-                s = segundos_restantes[0] % 60
-                lbl_tempo.config(text=f"{h:02d}:{m:02d}:{s:02d}")
-                time.sleep(1)
-            if executando[0]:
-                executando[0] = False
-                lbl_tempo.config(text="⏰ FIM!", fg="#E74C3C")
+    tk.Button(frame, text="✏️ Renomear", command=renomear, font=("Arial", 8),
+              bg="#7F8C8D", fg="white", relief="flat", bd=0, padx=8, pady=3, cursor="hand2",
+              activebackground="#95A5A6", activeforeground="white").pack(pady=(6, 0))
 
-        def iniciar():
-            if segundos_restantes[0] > 0 and not executando[0]:
-                lbl_tempo.config(fg=COR_TITULO)
-                executando[0] = True
-                threading.Thread(target=atualizar, daemon=True).start()
 
-        def parar():
-            executando[0] = False
+def abrir_cronometros():
+    """Abre a janela de seleção de tipo de cronômetro"""
+    menu_win = tk.Toplevel(root)
+    menu_win.title("Criar Cronômetro")
+    menu_win.geometry("250x150")
+    menu_win.configure(bg=COR_FUNDO)
+    menu_win.resizable(False, False)
 
-        def resetar():
-            executando[0] = False
-            segundos_restantes[0] = 0
-            lbl_tempo.config(text="00:00:00", fg=COR_TITULO)
+    lx = menu_win.winfo_screenwidth()
+    ly = menu_win.winfo_screenheight()
+    x = (lx - 250) // 2
+    y = (ly - 150) // 2
+    menu_win.geometry(f"250x150+{x}+{y}")
 
-        btn_frame1 = tk.Frame(frame_atual, bg=COR_FUNDO)
-        btn_frame1.pack(pady=(5, 5))
+    tk.Label(menu_win, text="Qual cronômetro deseja criar?",
+             font=("Arial", 11, "bold"), bg=COR_FUNDO, fg=COR_TITULO).pack(pady=(15, 15))
 
-        tk.Button(btn_frame1, text="⏱ Definir Tempo", command=perguntar_tempo,
-                  font=("Arial", 9, "bold"), bg="#8E44AD", fg="white", relief="flat",
-                  bd=0, padx=10, pady=5, cursor="hand2",
-                  activebackground="#7D3C98", activeforeground="white").pack()
-
-        btn_frame2 = tk.Frame(frame_atual, bg=COR_FUNDO)
-        btn_frame2.pack()
-
-        tk.Button(btn_frame2, text="▶ Iniciar", command=iniciar, font=("Arial", 9, "bold"),
-                  bg="#27AE60", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
-                  activebackground="#1ABC9C", activeforeground="white").grid(row=0, column=0, padx=4)
-        tk.Button(btn_frame2, text="⏸ Parar", command=parar, font=("Arial", 9, "bold"),
-                  bg="#E67E22", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
-                  activebackground="#D35400", activeforeground="white").grid(row=0, column=1, padx=4)
-        tk.Button(btn_frame2, text="↺ Resetar", command=resetar, font=("Arial", 9, "bold"),
-                  bg="#E74C3C", fg="white", relief="flat", bd=0, padx=10, pady=5, cursor="hand2",
-                  activebackground="#C0392B", activeforeground="white").grid(row=0, column=2, padx=4)
-
-    # Botões de seleção do tipo de cronômetro
-    tk.Button(cron_win, text="⏱ Progressivo", command=abrir_progressivo,
+    tk.Button(menu_win, text="⏱ Progressivo", command=lambda: [menu_win.destroy(), criar_janela_progressivo()],
               font=("Arial", 10, "bold"), bg="#3498DB", fg="white", relief="flat",
-              bd=0, padx=15, pady=8, cursor="hand2",
-              activebackground="#2980B9", activeforeground="white").pack(pady=(10, 0))
+              bd=0, padx=20, pady=8, cursor="hand2",
+              activebackground="#2980B9", activeforeground="white").pack(pady=4)
 
-    tk.Button(cron_win, text="⏳ Regressivo", command=abrir_regressivo,
+    tk.Button(menu_win, text="⏳ Regressivo", command=lambda: [menu_win.destroy(), criar_janela_regressivo()],
               font=("Arial", 10, "bold"), bg="#E67E22", fg="white", relief="flat",
-              bd=0, padx=15, pady=8, cursor="hand2",
-              activebackground="#D35400", activeforeground="white").pack(pady=(5, 0))
+              bd=0, padx=20, pady=8, cursor="hand2",
+              activebackground="#D35400", activeforeground="white").pack()
 
 
 def abrir_vscode():
