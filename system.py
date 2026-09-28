@@ -5,6 +5,7 @@ import webbrowser
 import os
 import time
 import threading
+import shutil
 
 # Cores e estilo
 COR_BOTAO = "#2980B9"
@@ -302,15 +303,33 @@ def abrir_cronometros():
               bd=0, padx=20, pady=8, cursor="hand2",
               activebackground="#D35400", activeforeground="white").pack()
 
+def encontrar_vscode():
+    caminho = shutil.which("code")
+    if caminho:
+        return caminho
+
+    locais = [
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe"),
+        os.path.expandvars(r"%PROGRAMFILES%\Microsoft VS Code\Code.exe"),
+        os.path.expandvars(r"%PROGRAMFILES(X86)%\Microsoft VS Code\Code.exe"),
+        "/usr/bin/code",
+        "/usr/local/bin/code",
+        "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code",
+    ]
+    for local in locais:
+        if os.path.isfile(local):
+            return local
+    return None
 
 def abrir_vscode():
-    try:
-        subprocess.Popen(["C:\\Users\\Joaquim\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"])
-    except FileNotFoundError:
+    caminho = encontrar_vscode()
+    if caminho:
+        subprocess.Popen([caminho])
+    else:
         messagebox.showerror("Erro", "VS Code não encontrado!")
 
 def abrir_cmd():
-    subprocess.Popen("cmd")
+    subprocess.Popen("start cmd", shell=True)
 
 def limpar_temp():
     """Limpa as pastas TEMP, TMP e cache de instaladores do Windows"""
